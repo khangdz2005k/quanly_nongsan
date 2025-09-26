@@ -1,7 +1,24 @@
 import reflex as rx
 
-import reflex as rx
-
+class State(rx.State):
+    sample_data: list[dict] = [
+    {
+        "id": "11",
+        "ma_loai": "TEST",
+        "ten_loai": "Loại test",
+        "nguoi_tao": "kdevn",
+        "thoi_gian": "2024-07-07 21:44:24",
+        "fullname": "KD Educode",
+    },
+    {
+        "id": "12",
+        "ma_loai": "ABC",
+        "ten_loai": "Loại ABC",
+        "nguoi_tao": "kdevn",
+        "thoi_gian": "2024-07-08 12:30:00",
+        "fullname": "KD Educode",
+    },
+]
 
 def sidebar():
     return rx.vstack(
@@ -64,9 +81,39 @@ def main_content():
             spacing="4",
         ),
         rx.button("Thêm loại hàng", bg="red", color="white"),
-        spacing="4",
-        width="80%",
-        padding="20px",
+        rx.heading("Danh sách loại hàng", size="4"),
+        rx.vstack(
+            rx.text("Gõ tìm kiếm và nhấn Enter"),
+            rx.input(placeholder="Gõ tìm kiếm và nhấn Enter"),
+        ),
+
+        rx.table.root(
+            rx.table.header(
+                rx.table.row(
+                    rx.table.column_header_cell("Select"),
+                    rx.table.column_header_cell("ID"),
+                    rx.table.column_header_cell("Mã loại hàng"),
+                    rx.table.column_header_cell("Tên loại hàng"),
+                    rx.table.column_header_cell("Người tạo"),
+                    rx.table.column_header_cell("Thời gian tạo"),
+                    rx.table.column_header_cell("Fullname"),
+                )
+            ),
+        rx.table.body(
+                rx.foreach(
+                    State.sample_data,
+                    lambda item: rx.table.row(
+                        rx.table.cell(rx.checkbox()),
+                        rx.table.cell(item["id"]),
+                        rx.table.cell(item["ma_loai"]),
+                        rx.table.cell(item["ten_loai"]),
+                        rx.table.cell(item["nguoi_tao"]),
+                        rx.table.cell(item["thoi_gian"]),
+                        rx.table.cell(item["fullname"]),
+                    )
+                )
+            )
+        )
     )
 
 
