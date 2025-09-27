@@ -1,9 +1,5 @@
 import reflex as rx
-
-from rxconfig import config
-
-
-from quanly_nongsan.sidebar import index
+from .sidebar import index
 
 app = rx.App()
-app.add_page(index)
+app.add_page(index, route='/')
