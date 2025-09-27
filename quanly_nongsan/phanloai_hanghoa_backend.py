@@ -56,12 +56,20 @@ class State(rx.State):
                 rows = cursor.fetchall()
                 # tasks sẽ là list dict để dễ quản lý
                 for row in rows:
+                    # Lấy giá trị datetime
+                    created_at_val = getattr(row, "CreatedAt", None)
+                    # Định dạng lại nếu giá trị tồn tại, nếu không thì là chuỗi rỗng
+                    formatted_date = (
+                        created_at_val.strftime("%Y-%m-%d %H:%M:%S")
+                        if created_at_val
+                        else ""
+                    )
                     self.products.append(
                         {
                             "id": row.ID,
                             "code": row.Code,
                             "name": row.Name,
-                            "createdat": getattr(row, "CreatedAt", None),
+                            "createdat": formatted_date, # Sử dụng giá trị đã định dạng
                         }
                     )
         except Exception as e:
@@ -83,12 +91,20 @@ class State(rx.State):
                 )
                 rows = cursor.fetchall()
                 for row in rows:
+                    # Lấy giá trị datetime
+                    created_at_val = getattr(row, "CreatedAt", None)
+                    # Định dạng lại nếu giá trị tồn tại, nếu không thì là chuỗi rỗng
+                    formatted_date = (
+                        created_at_val.strftime("%Y-%m-%d %H:%M:%S")
+                        if created_at_val
+                        else ""
+                    )
                     self.products.append(
                         {
                             "id": row.ID,
                             "code": row.Code,
                             "name": row.Name,
-                            "createdat": getattr(row, "CreatedAt", None),
+                            "createdat": formatted_date, # Sử dụng giá trị đã định dạng
                         }
                     )
         except Exception as e:
