@@ -1,25 +1,5 @@
 import reflex as rx
-
-
-class State(rx.State):
-    sample_data: list[dict] = [
-        {
-            "id": "11",
-            "ma_loai": "TEST",
-            "ten_loai": "Loại test",
-            "nguoi_tao": "kdevn",
-            "thoi_gian": "2024-07-07 21:44:24",
-            "fullname": "KD Educode",
-        },
-        {
-            "id": "12",
-            "ma_loai": "ABC",
-            "ten_loai": "Loại ABC",
-            "nguoi_tao": "kdevn",
-            "thoi_gian": "2024-07-08 12:30:00",
-            "fullname": "KD Educode",
-        },
-    ]
+from .phanloai_hanghoa_backend import State
 
 
 def sidebar():
@@ -28,8 +8,8 @@ def sidebar():
         rx.hstack(
             rx.image(src="/logo.png", width="140px", height="180px"),
             marginTop="20%",
-            border = "2px solid none",
-            boxShadow = "0 0 10px rgba(255, 0, 0, 0.75)"
+            border="2px solid none",
+            boxShadow="0 0 10px rgba(255, 0, 0, 0.75)",
         ),
         rx.box(
             height="1px", bg="black", width="100%", marginTop="5%", marginBottom="5%"
@@ -106,9 +86,9 @@ def sidebar():
         # rx.spacer(),
         # User info
         rx.vstack(
-            rx.heading("Xin chào: KD Educode (kdevn)", size="5", text_align = "left"),
-            rx.button("Đăng xuất", bg = "lightgray", color = "black", border = "1px solid"),
-            marginTop = "5%"
+            rx.heading("Xin chào: KD Educode (kdevn)", size="5", text_align="left"),
+            rx.button("Đăng xuất", bg="lightgray", color="black", border="1px solid"),
+            marginTop="5%",
         ),
         width="25%",
         height="100vh",
@@ -135,22 +115,32 @@ def main_content():
                 rx.vstack(
                     rx.text("Mã loại hàng", size="2"),
                     rx.input(
-                        placeholder="Nhập mã loại hàng", bg="#f1f4f9", color="black"
+                        bg="#f1f4f9",
+                        color="black",
+                        value=State.new_product_type_code,
+                        on_change=State.set_product_type_code,
                     ),
                 ),
                 rx.vstack(
                     rx.text("Tên loại hàng", size="2"),
                     rx.input(
-                        placeholder="Nhập tên loại hàng",
                         width="100%",
                         bg="#f1f4f9",
                         color="black",
+                        value=State.new_product_type_name,
+                        on_change=State.set_product_type_name,
                     ),
                     width="100%",
                 ),
                 width="100%",
             ),
-            rx.button("Thêm loại hàng", bg="red", color="white"),
+            rx.button(
+                "Thêm loại hàng",
+                bg="red",
+                color="white",
+                on_click=State.add_product,
+                cursor="pointer",
+            ),
             rx.heading("Danh sách loại hàng", size="7", marginTop="3%"),
             rx.box(
                 style={
@@ -163,10 +153,12 @@ def main_content():
             rx.vstack(
                 rx.text("Gõ tìm kiếm và nhấn Enter", size="2"),
                 rx.input(
-                    placeholder="Gõ tìm kiếm và nhấn Enter",
                     width="100%",
                     bg="#f1f4f9",
                     color="black",
+                    value=State.new_product_type_code,
+                    on_change=State.set_product_type_code,
+                    on_key_down=State.search_on_enter,
                 ),
                 width="100%",
             ),
@@ -174,35 +166,44 @@ def main_content():
             rx.table.root(
                 rx.table.header(
                     rx.table.row(
-                        rx.table.column_header_cell("Select"),
-                        rx.table.column_header_cell("ID"),
-                        rx.table.column_header_cell("Mã loại hàng"),
-                        rx.table.column_header_cell("Tên loại hàng"),
-                        rx.table.column_header_cell("Người tạo"),
-                        rx.table.column_header_cell("Thời gian tạo"),
-                        rx.table.column_header_cell("Fullname"),
-                    )
+                        rx.table.column_header_cell("Select", color="black", border = "0.5px solid #C1C1C1", bg = "#E4E6E7"),
+                        rx.table.column_header_cell("ID", color="black", border = "0.5px solid #C1C1C1", bg = "#E4E6E7"),
+                        rx.table.column_header_cell("Mã loại hàng", color="black", border = "0.5px solid #C1C1C1", bg = "#E4E6E7"),
+                        rx.table.column_header_cell("Tên loại hàng", color="black", border = "0.5px solid #C1C1C1", bg = "#E4E6E7"),
+                        rx.table.column_header_cell("Thời gian tạo", color="black", border = "0.5px solid #C1C1C1", bg = "#E4E6E7"),
+                    ),
                 ),
                 rx.table.body(
                     rx.foreach(
-                        State.sample_data,
+                        State.products,
                         lambda item: rx.table.row(
-                            rx.table.cell(rx.checkbox()),
-                            rx.table.cell(item["id"]),
-                            rx.table.cell(item["ma_loai"]),
-                            rx.table.cell(item["ten_loai"]),
-                            rx.table.cell(item["nguoi_tao"]),
-                            rx.table.cell(item["thoi_gian"]),
-                            rx.table.cell(item["fullname"]),
+                            rx.table.cell(rx.checkbox(), border = "0.5px solid #C1C1C1"),
+                            rx.table.cell(item["id"], color="black", border = "0.5px solid #C1C1C1"),
+                            rx.table.cell(item["code"], color="black", border = "0.5px solid #C1C1C1"),
+                            rx.table.cell(item["name"], color="black", border = "0.5px solid #C1C1C1"),
+                            rx.table.cell(
+                                rx.cond(
+                                    item["createdat"],  # điều kiện là Var
+                                    rx.text(
+                                        item["createdat"], color="black"
+                                    ),  # case có giá trị
+                                    rx.text(""),  # case rỗng
+                                ),
+                                border = "0.5px solid #C1C1C1"
+                            ),
                         ),
-                    )
+                    ),
                 ),
+                border = "0.5px solid #C1C1C1",
+                border_radius = "4px"
             ),
             width="100%",
             max_width="1400px",  # hoặc 800px tùy theo mong muốn
         ),
         width="100%",
         height="100vh",
+        bg="white",
+        color="black",
     )
 
 
@@ -210,6 +211,8 @@ def index() -> rx.Component:
     return rx.hstack(
         sidebar(),
         main_content(),
+        gap="0",
         width="100%",
         height="100vh",
+        on_mount=State.load_products_type,
     )
