@@ -20,6 +20,12 @@ class State(rx.State):
     new_product_type_name: str = ""
     new_product_type_code: str = ""
 
+    # Biến trạng thái mới để lưu sản phẩm đang được chọn
+    selected_product: dict | None = None
+    # Biến để lưu giá trị đang chỉnh sửa
+    edited_code: str = ""
+    edited_name: str = ""
+
     def add_product(self):
         label = (self.new_product_type_name or "").strip()
         code = (self.new_product_type_code or "").strip()
@@ -46,6 +52,8 @@ class State(rx.State):
         self.new_product_type_code = v
 
     def load_products_type(self):
+        # Đảm bảo bỏ chọn khi tải lại danh sách
+        self.selected_product = None
         self.products = []
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
@@ -59,6 +67,8 @@ class State(rx.State):
                     # Lấy giá trị datetime
                     created_at_val = getattr(row, "CreatedAt", None)
                     # Định dạng lại nếu giá trị tồn tại, nếu không thì là chuỗi rỗng
+                for row in rows:
+                    created_at_val = getattr(row, "CreatedAt", None)
                     formatted_date = (
                         created_at_val.strftime("%Y-%m-%d %H:%M:%S")
                         if created_at_val
@@ -75,6 +85,79 @@ class State(rx.State):
         except Exception as e:
             print(f"Lỗi khi tải dữ liệu {e}")
 
+    # Hàm mới để xử lý việc chọn/bỏ chọn
+    def select_product(self, item: dict, checked: bool):
+        if checked:
+            self.selected_product = item
+            # Gán giá trị ban đầu cho các input chỉnh sửa
+            self.edited_code = item["code"]
+            self.edited_name = item["name"]
+        else:
+            self.selected_product = None
+
+    # Hàm setter cho các input chỉnh sửa
+    def set_edited_code(self, code: str):
+        self.edited_code = code
+
+    def set_edited_name(self, name: str):
+        self.edited_name = name
+
+    # Hàm để cập nhật thông tin
+    # Trong class State của file phanloai_hanghoa_backend.py
+
+    def update_product(self):
+        # Kiểm tra xem có sản phẩm nào được chọn không
+        if not self.selected_product:
+            return
+
+        # Lấy thông tin cần thiết
+        product_id = self.selected_product["id"]
+        updated_code = self.edited_code
+        updated_name = self.edited_name
+
+        try:
+            # 1. Cập nhật vào cơ sở dữ liệu như cũ
+            with pyodbc.connect(CONNECTION_STRING) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE ProductTypes SET Code = ?, Name = ? WHERE ID = ?",
+                    (updated_code, updated_name, product_id),
+                )
+                conn.commit()
+
+            # 2. Cập nhật trực tiếp vào danh sách 'products' trong State
+            #    thay vì gọi lại self.load_products_type()
+            for i, prod in enumerate(self.products):
+                if prod["id"] == product_id:
+                    self.products[i]["code"] = updated_code
+                    self.products[i]["name"] = updated_name
+                    break  # Dừng vòng lặp khi đã tìm thấy và cập nhật
+
+            # 3. Xóa sản phẩm đang được chọn để ẩn form và bỏ check
+            self.selected_product = None
+
+        except Exception as e:
+            print(f"Lỗi khi cập nhật: {e}")
+
+    # Hàm để xóa
+    def delete_product(self):
+        if self.selected_product:
+            try:
+                with pyodbc.connect(CONNECTION_STRING) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "DELETE FROM ProductTypes WHERE ID = ?",
+                        (self.selected_product["id"],),
+                    )
+                    conn.commit()
+
+                # *** SỬA LỖI: Reset trạng thái ngay lập tức ***
+                self.selected_product = None
+                # Tải lại danh sách sau khi xóa
+                self.load_products_type()
+            except Exception as e:
+                print(f"Lỗi khi xóa: {e}")
+
     def search_products_type(self):
         code = (self.new_product_type_code or "").strip()
         if not code:
@@ -82,6 +165,7 @@ class State(rx.State):
 
         self.products = []
 
+        self.products = []
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
@@ -91,9 +175,7 @@ class State(rx.State):
                 )
                 rows = cursor.fetchall()
                 for row in rows:
-                    # Lấy giá trị datetime
                     created_at_val = getattr(row, "CreatedAt", None)
-                    # Định dạng lại nếu giá trị tồn tại, nếu không thì là chuỗi rỗng
                     formatted_date = (
                         created_at_val.strftime("%Y-%m-%d %H:%M:%S")
                         if created_at_val
@@ -104,41 +186,12 @@ class State(rx.State):
                             "id": row.ID,
                             "code": row.Code,
                             "name": row.Name,
-                            "createdat": formatted_date, # Sử dụng giá trị đã định dạng
+                            "createdat": formatted_date,
                         }
                     )
         except Exception as e:
             print(f"Lỗi khi tìm kiếm {e}")
 
     def search_on_enter(self, key: str):
-        # Tên type có thể là KeyEvent/KeyboardEvent tùy phiên bản Reflex; nếu bạn không import được
-        # cứ để tham số 'e' không gõ kiểu cũng được.
         if key == "Enter":
             return self.search_products_type()
-
-    # def delete_products_type(self, ids: list[int]):
-    #     ids = [int(i) for i in ids]
-    #     if not ids:
-    #         return
-    #     try:
-    #         with pyodbc.connect(CONNECTION_STRING) as conn:
-    #             cursor = conn.cursor()
-    #             placeholder = ",".join("?" for i in ids)
-    #             cursor.execute(f"DELETE FROM ProductTypes WHERE ID IN ({placeholder})", tuple(ids))
-    #             conn.commit()
-    #         self.load_products_type()
-    #     except Exception as e:
-    #         print(f"Lỗi khi xoá {e}")
-
-    # def select_products_type(self, product_id: int):
-    #     try:
-    #         with pyodbc.connect(CONNECTION_STRING) as conn:
-    #             cursor = conn.cursor()
-    #             cursor.excute("SELECT ID, Code, Name FROM ProductTypes WHERE ID = ?", product_id)
-    #             rows = cursor.fetchone()
-    #     except Exception as e:
-    #         print(f"Lỗi khi chọn {e}")
-
-    # def update_products_type(self):
-
-    # def editing_products_type(self):
