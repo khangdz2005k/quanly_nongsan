@@ -79,7 +79,7 @@ class State(rx.State):
                             "id": row.ID,
                             "code": row.Code,
                             "name": row.Name,
-                            "createdat": formatted_date, # Sử dụng giá trị đã định dạng
+                            "createdat": formatted_date,  # Sử dụng giá trị đã định dạng
                         }
                     )
         except Exception as e:
