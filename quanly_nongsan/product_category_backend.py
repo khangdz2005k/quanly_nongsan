@@ -38,8 +38,8 @@ class State(rx.State):
     def load_product_types_code(self):
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
-                cursor = conn.cursor()
-                cursor.excute("SELECT Code FROM ProductTypes")
+                cursor = conn.cursor() 
+                cursor.execute("SELECT Code FROM ProductTypes")
                 rows = cursor.fetchall()
                 for row in rows:
                     self.product_types_code.append(row.Code)
@@ -149,5 +149,5 @@ class State(rx.State):
             self.new_products_code = ""
             self.load_products()
         except Exception as e:
-            print(f"Lỗi khi thêm loại hàng {e}")         
+            print(f"Lỗi khi thêm loại hàng {e}")        
          
