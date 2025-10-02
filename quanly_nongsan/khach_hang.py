@@ -1,127 +1,16 @@
 import reflex as rx
+from .customer_backend import UserState
 
 # THÊM CỘT "Hành động" cho nút Xóa
 HEADERS = [
     "Select",
-    "Mã khách hàng",
+    "ID",
+    "Username",
     "Tên khách hàng",
-    "Địa chỉ",
-    "Người liên hệ",
+    "Vai trò",
     "Số điện thoại",
-    "Email",
-    "Hành động",  # Đã thêm cột này
+    "Địa chỉ",
 ]
-
-
-class State(rx.State):
-    selected_customer: dict | None = None
-    search_query: str = ""
-
-    # Dữ liệu mẫu (giữ nguyên)
-    customers = [
-        {
-            "id": 1,
-            "code": "KH1",
-            "name": "Công ty sờ ki bi đi",
-            "address": "Quận L, Đường ribidi, TP.SKB",
-            "contact_person": "TrẦN NGuyễN RuDIBi",
-            "phone": "616516131",
-            "email": "Rdib.Tran@gmail.com",
-        },
-        {
-            "id": 2,
-            "code": "KH2",
-            "name": "Cửa hàng Brainpro chuyên bán lẻ PRoBrot",
-            "address": "Quận R, Đường Trlatungten, TP.SKB",
-            "contact_person": "Lê HUy TRalero",
-            "phone": "32131516",
-            "email": "brian.lee@gmail.com",
-        },
-    ]
-
-    new_customer_code: str = ""
-    new_customer_name: str = ""
-    new_customer_address: str = ""
-    new_customer_contact_person: str = ""
-    new_customer_phone: str = ""
-    new_customer_email: str = ""
-
-    # Các hàm set_new_customer... (giữ nguyên)
-    def set_new_customer_code(self, value: str):
-        self.new_customer_code = value
-
-    def set_new_customer_name(self, value: str):
-        self.new_customer_name = value
-
-    def set_new_customer_address(self, value: str):
-        self.new_customer_address = value
-
-    def set_new_customer_contact_person(self, value: str):
-        self.new_customer_contact_person = value
-
-    def set_new_customer_phone(self, value: str):
-        self.new_customer_phone = value
-
-    def set_new_customer_email(self, value: str):
-        self.new_customer_email = value
-
-    def set_search_query(self, value: str):
-        self.search_query = value
-
-    def select_customer(self, customer_id: int, checked: bool):
-        """Chọn hoặc hủy chọn khách hàng. Chỉ cho phép một khách hàng được chọn."""
-        if checked:
-            # Tìm khách hàng theo ID
-            customer = next((c for c in self.customers if c["id"] == customer_id), None)
-            self.selected_customer = customer
-        else:
-            # Nếu bỏ chọn (chỉ xảy ra nếu nó đang được chọn), thì reset
-            if self.selected_customer and self.selected_customer["id"] == customer_id:
-                self.selected_customer = None
-
-    def delete_selected_customer(self):
-        """Xóa khách hàng đang được chọn (từ nút trên Selected Info)."""
-        if self.selected_customer is None:
-            return
-
-        customer_id_to_delete = self.selected_customer["id"]
-        self.customers = [c for c in self.customers if c["id"] != customer_id_to_delete]
-        self.selected_customer = None
-
-    def delete_customer_by_id(self, customer_id: int):
-        """Xóa khách hàng dựa trên ID truyền vào (từ nút Xóa trên hàng)."""
-        self.customers = [c for c in self.customers if c["id"] != customer_id]
-        if self.selected_customer and self.selected_customer["id"] == customer_id:
-            self.selected_customer = None
-
-    def add_customer(self):
-        """Thêm khách hàng mới và reset form."""
-        if not (self.new_customer_code.strip() and self.new_customer_name.strip()):
-            return
-
-        try:
-            new_id = max(c["id"] for c in self.customers) + 1
-        except ValueError:
-            new_id = 1
-
-        new_customer = {
-            "id": new_id,
-            "code": self.new_customer_code.strip(),
-            "name": self.new_customer_name.strip(),
-            "address": self.new_customer_address.strip(),
-            "contact_person": self.new_customer_contact_person.strip(),
-            "phone": self.new_customer_phone.strip(),
-            "email": self.new_customer_email.strip(),
-        }
-        self.customers.append(new_customer)
-
-        # SỬA LỖI: Reset biến trạng thái phải gán chuỗi rỗng ("")
-        self.new_customer_code = ""
-        self.new_customer_name = ""
-        self.new_customer_address = ""
-        self.new_customer_contact_person = ""
-        self.new_customer_phone = ""
-        self.new_customer_email = ""
 
 
 def customers_rows():
@@ -130,92 +19,161 @@ def customers_rows():
         "color": "black",
         "padding": "8px",
     }
-    return rx.foreach(
-        State.customers,
-        lambda customer: rx.table.row(
-            # CỘT 1: CHECKBOX (CHỌN KHÁCH HÀNG)
-            rx.table.cell(
-                rx.checkbox(
-                    on_change=lambda checked: State.select_customer(
-                        customer["id"], checked
-                    ),
-                    # Logic để chỉ check nếu selected_customer tồn tại và ID trùng
-                    is_checked=rx.cond(
-                        State.selected_customer,
-                        State.selected_customer["id"] == customer["id"],
-                        False,
-                    ),
-                ),
-                style=CELL_STYLE,
+
+    SELECTED_ROW_STYLE = {
+        "border": "0.5px solid #C1C1C1",
+        "color": "black",
+        "padding": "8px",
+    }
+
+    # Biến điều kiện kiểm tra ID hiện tại có khớp với ID đang chọn hay không.
+    # Ta dùng rx.State.get() để truy cập an toàn vào dictionary.
+    is_selected = lambda user: rx.cond(
+        UserState.selected_user,
+        # Nếu có user đang chọn, kiểm tra ID
+        UserState.selected_user["id"] == user["id"],
+        # Nếu không có user nào được chọn (None), trả về False
+        False,
+    )
+
+    return rx.table.root(
+        rx.table.header(
+            rx.table.row(
+                *[rx.table.column_header_cell(h, style=CELL_STYLE) for h in HEADERS],
             ),
-            # CÁC CỘT DỮ LIỆU
-            rx.table.cell(customer["code"], style=CELL_STYLE),
-            rx.table.cell(customer["name"], style=CELL_STYLE),
-            rx.table.cell(customer["address"], style=CELL_STYLE),
-            rx.table.cell(customer["contact_person"], style=CELL_STYLE),
-            rx.table.cell(customer["phone"], style=CELL_STYLE),
-            rx.table.cell(customer["email"], style=CELL_STYLE),
-            # CỘT CUỐI: NÚT XÓA TRỰC TIẾP (Dùng rx.window_confirm)
-            rx.table.cell(
-                rx.button(
-                    "Xóa",
-                    # Dùng rx.window_confirm để yêu cầu xác nhận trước khi gọi hàm xóa
-                    on_click=State.delete_customer_by_id(customer["id"]),
-                    size="1",
-                    color_scheme="red",
+        ),
+        rx.table.body(
+            rx.foreach(
+                UserState.users,
+                lambda user: rx.table.row(
+                    rx.table.cell(
+                        rx.checkbox(
+                            checked=(
+                                UserState.selected_user.is_not_none()
+                                & (UserState.selected_user["id"] == user["id"])
+                            ),
+                            on_change=lambda checked: UserState.handle_user_selection(
+                                checked, user
+                            ),
+                            cursor="pointer",
+                        ),
+                        style=SELECTED_ROW_STYLE,
+                    ),
+                    rx.table.cell(user["id"], style=CELL_STYLE),
+                    rx.table.cell(user["username"], style=CELL_STYLE),
+                    rx.table.cell(user["full_name"], style=CELL_STYLE),
+                    rx.table.cell(user["role"], style=CELL_STYLE),
+                    rx.table.cell(user["phone_number"], style=CELL_STYLE),
+                    rx.table.cell(user["address"], style=CELL_STYLE),
                 ),
-                style=CELL_STYLE,
-            ),
-            key=customer["id"],
+            )
         ),
     )
 
 
-def selected_customer_info() -> rx.Component:
-    """Hiển thị thông tin chi tiết khách hàng đã chọn và nút xóa."""
+def edit_delete_form():
+    """Tạo form chỉnh sửa và các nút hành động, mô phỏng chính xác cấu trúc bảng."""
+
+    # Định nghĩa lại các style bạn đã cung cấp trong customers_rows()
+    CELL_STYLE = {
+        "border": "0.5px solid #C1C1C1",
+        "color": "black",
+        "padding": "8px",
+    }
+
+    # Định nghĩa lại HEADERS (cần thiết cho Header của form)
+    # Giả định HEADERS của bạn là: ["Select", "ID", "Username", "Tên khách hàng", "Vai trò", "Số điện thoại", "Địa chỉ"]
+    HEADERS_FOR_DISPLAY = [
+        "ID",
+        "Username",
+        "Tên khách hàng",
+        "Vai trò",
+        "Số điện thoại",
+        "Địa chỉ",
+    ]
+
     return rx.cond(
-        State.selected_customer,
-        rx.vstack(
-            rx.heading("Khách hàng đang chọn", size="6", color="blue"),
-            rx.box(
-                rx.vstack(
-                    rx.text(
-                        f"Mã khách hàng: ", rx.code(State.selected_customer["code"])
-                    ),
-                    rx.text(
-                        f"Tên khách hàng: ", rx.code(State.selected_customer["name"])
-                    ),
-                    rx.text(f"Địa chỉ: ", rx.code(State.selected_customer["address"])),
-                    rx.text(
-                        f"Người liên hệ: ",
-                        rx.code(State.selected_customer["contact_person"]),
-                    ),
-                    rx.text(
-                        f"Số điện thoại: ", rx.code(State.selected_customer["phone"])
-                    ),
-                    rx.text(f"Email: ", rx.code(State.selected_customer["email"])),
-                    spacing="2",
-                    align_items="flex-start",
-                ),
-                border="1px solid blue",
-                padding="10px",
-                border_radius="8px",
-                width="100%",
+        UserState.selected_user,
+        rx.vstack(  # Khối vstack chứa toàn bộ Form và Nút
+            rx.heading(
+                f"Thông tin khách hàng đang chọn: {UserState.selected_user.full_name}",
+                size="5",
+                color="black",
+                margin_bottom="15px",
             ),
-            # Nút xóa dành riêng cho khách hàng đang được chọn
-            rx.button(
-                "Xóa khách hàng đã chọn (Checkbox)",
-                # Dùng rx.window_confirm để yêu cầu xác nhận trước khi gọi hàm xóa
-                on_click=State.delete_selected_customer,
-                bg="red",
-                color="white",
-                margin_top="10px",
+            # 1. BẢNG MÔ PHỎNG (Form chính)
+            rx.table.root(
+                # Header (Cần thiết để căn chỉnh cột)
+                rx.table.header(
+                    rx.table.row(
+                        *[
+                            rx.table.column_header_cell(h, style=CELL_STYLE)
+                            for h in HEADERS_FOR_DISPLAY
+                        ],
+                    ),
+                ),
+                # Body (Chỉ có một hàng dữ liệu đang được chọn)
+                rx.table.body(
+                    rx.table.row(
+                        # Cột 2-4: Dữ liệu cố định
+                        rx.table.cell(UserState.selected_user.id, style=CELL_STYLE),
+                        rx.table.cell(
+                            UserState.selected_user.username, style=CELL_STYLE
+                        ),
+                        rx.table.cell(
+                            UserState.selected_user.full_name, style=CELL_STYLE
+                        ),
+                        rx.table.cell(UserState.selected_user.role, style=CELL_STYLE),
+                        # Cột 5: SĐT (Dữ liệu chỉnh sửa - Input)
+                        rx.table.cell(
+                            rx.input(
+                                value=UserState.edited_phone_number,
+                                on_change=UserState.set_edited_phone_number,
+                                size="1",
+                                width="100%",
+                                bg="transparent",
+                                color="black",
+                            ),
+                            style=CELL_STYLE,
+                        ),
+                        rx.table.cell(
+                            rx.input(
+                                value=UserState.edited_address,
+                                on_change=UserState.set_edited_address,
+                                size="1",
+                                width="100%",
+                                bg="transparent",
+                                color="black",
+                            ),
+                            style=CELL_STYLE,
+                        ),
+                    ),
+                ),
+                width="100%",
+                style={"border_collapse": "collapse", "border": "1px solid #C1C1C1"},
+            ),
+            # 2. KHỐI NÚT HÀNH ĐỘNG
+            rx.hstack(
+                rx.button(
+                    rx.hstack(rx.icon("save"), rx.text("Cập nhật")),
+                    on_click=UserState.update_user,
+                    color_scheme="green",
+                    size="2",
+                    cursor="pointer",
+                ),
+                rx.button(
+                    rx.hstack(rx.icon("trash-2"), rx.text("Xóa")),
+                    on_click=UserState.delete_user,
+                    color_scheme="red",
+                    size="2",
+                    cursor="pointer",
+                ),
+                margin_top="15px",
             ),
             width="100%",
-            align_items="flex-start",
-            margin_bottom="20px",
+            align_items="start",
+            margin_y="20px",
         ),
-        rx.box(),
     )
 
 
@@ -321,6 +279,17 @@ def sidebar():
 
 def main_content():
     return rx.vstack(
+        rx.center(
+            rx.hstack(
+                rx.button("Phân loại hàng hóa", bg="whitesmoke", color = "black", padding = "12px", cursor = "pointer"),
+                rx.button("Danh mục hàng hóa", bg="whitesmoke", color = "black", padding = "12px", cursor = "pointer"),
+                rx.button("Danh sách khách hàng", bg="red", color = "white", padding = "12px", cursor = "pointer"),
+                rx.button("Quản lý hình ảnh", bg="whitesmoke", color = "black", padding = "12px", cursor = "pointer"),
+                spacing="0",
+            ),
+            width="100%",
+            marginTop="2%",
+        ),
         rx.heading("Thêm khách hàng", size="7"),
         rx.box(
             height="2px",
@@ -331,19 +300,10 @@ def main_content():
         rx.vstack(
             rx.hstack(
                 rx.vstack(
-                    rx.text("Mã khách hàng", size="1"),
-                    rx.input(
-                        value=State.new_customer_code,
-                        on_change=State.set_new_customer_code,
-                        bg="whitesmoke",
-                        color="black",
-                    ),
-                ),
-                rx.vstack(
                     rx.text("Tên khách hàng", size="1"),
                     rx.input(
-                        value=State.new_customer_name,
-                        on_change=State.set_new_customer_name,
+                        value=UserState.new_user_full_name,
+                        on_change=UserState.set_new_user_full_name,
                         bg="whitesmoke",
                         color="black",
                     ),
@@ -351,18 +311,8 @@ def main_content():
                 rx.vstack(
                     rx.text("Địa chỉ", size="1"),
                     rx.input(
-                        value=State.new_customer_address,
-                        on_change=State.set_new_customer_address,
-                        bg="whitesmoke",
-                        color="black",
-                        width="100%",
-                    ),
-                ),
-                rx.vstack(
-                    rx.text("Người liên hệ", size="1"),
-                    rx.input(
-                        value=State.new_customer_contact_person,
-                        on_change=State.set_new_customer_contact_person,
+                        value=UserState.new_user_address,
+                        on_change=UserState.set_new_user_address,
                         bg="whitesmoke",
                         color="black",
                         width="100%",
@@ -371,30 +321,19 @@ def main_content():
                 rx.vstack(
                     rx.text("SĐT", size="1"),
                     rx.input(
-                        value=State.new_customer_phone,
-                        on_change=State.set_new_customer_phone,
+                        value=UserState.new_user_phone_number,
+                        on_change=UserState.set_new_user_phone_number,
                         bg="whitesmoke",
                         color="black",
                         width="100%",
                     ),
-                ),
-                rx.vstack(
-                    rx.text("Email", size="1"),
-                    rx.input(
-                        value=State.new_customer_email,
-                        on_change=State.set_new_customer_email,
-                        bg="whitesmoke",
-                        color="black",
-                        width="100%",
-                    ),
-                    width="20%",
                 ),
                 width="100%",
             ),
             rx.button(
-                "Thêm khách hàng", bg="red", color="white", on_click=State.add_customer
+                "Thêm khách hàng", bg="red", color="white", on_click=UserState.add_user
             ),
-            rx.box(marginTop="5%"),
+            rx.box(marginTop="2%"),
             # Khối thông tin khách hàng đang chọn
             rx.heading("Danh sách khách hàng", size="7"),
             rx.box(
@@ -407,6 +346,9 @@ def main_content():
                 rx.text("Gõ tìm kiếm và nhấn Enter", size="2"),
                 rx.input(
                     # Cần thêm logic tìm kiếm tại đây
+                    value=UserState.search_query,
+                    on_change=UserState.set_search_query,
+                    on_key_down=UserState.search_on_enter,
                     width="100%",
                     bg="#f1f4f9",
                     color="black",
@@ -414,25 +356,13 @@ def main_content():
                 width="100%",
             ),
             rx.heading("Kết quả tìm kiếm", size="3"),
-            rx.table.root(
-                rx.table.header(
-                    rx.table.row(
-                        *[
-                            rx.table.column_header_cell(
-                                h,
-                                color="black",
-                                border="0.5px solid #C1C1C1",
-                                bg="#E4E6E7",
-                            )
-                            for h in HEADERS
-                        ]
-                    )
-                ),
-                rx.table.body(
-                    customers_rows(),
-                ),
+            rx.box(
+                customers_rows(),
+                edit_delete_form(),  # Gọi trực tiếp hàm trả về bảng
+                width="100%",
+                overflow_x="auto",
+                margin_top="10px",
             ),
-            selected_customer_info(),
             width="100%",
             overflow_x="auto",
             margin_top="10px",
@@ -449,6 +379,7 @@ def index() -> rx.Component:
     return rx.hstack(
         sidebar(),
         main_content(),
+        on_mount=UserState.load_users,
         gap="0",
         max_width="100%",
         height="100vh",
