@@ -124,6 +124,7 @@ def edit_product_form():
         "Mã Hàng Hóa",
         "Tên Hàng Hóa",
         "Loại Hàng",
+        "Ảnh sản phẩm",  # Thêm cột header
         "Ngày Hết Hạn",
         "Ghi Chú",
     ]
@@ -179,7 +180,19 @@ def edit_product_form():
                                 State.product_types_options,
                                 value=State.edited_type_code,
                                 on_change=State.set_edited_type_code,
-                                bg="white",
+                                bg="whitesmoke",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Ảnh sản phẩm
+                        rx.table.cell(
+                            rx.select(
+                                State.all_images_options,
+                                placeholder="-- Chọn ảnh --",
+                                value=State.edited_primary_image_url,
+                                on_change=State.set_edited_primary_image_url,
+                                background_color="#000",
                                 color="black",
                             ),
                             border="0.5px solid #C1C1C1",
@@ -252,7 +265,7 @@ def main_content():
                         State.product_types_options,
                         placeholder="-- Chọn loại hàng --",
                         width="100%",
-                        background_color = "whitesmoke",
+                        background_color="whitesmoke",
                         color="black",
                         value=State.selected_type_code,
                         on_change=State.set_selected_type_code,
@@ -284,6 +297,7 @@ def main_content():
                     rx.text("Ngày hết hạn", size="1"),
                     rx.input(
                         "",
+                        type_="date",  # Thêm type="date"
                         bg="whitesmoke",
                         color="black",
                         width="100%",
@@ -306,26 +320,6 @@ def main_content():
                 ),
                 width="100%",
             ),
-            # rx.vstack(
-            #     rx.text("Ảnh sản phẩm", size="1"),
-            # ),
-            # rx.upload(
-            #     rx.hstack(
-            #         rx.icon("upload", size=30),
-            #         rx.vstack(
-            #             rx.text("Drag and drop file here"),
-            #             rx.text("Limit 200MB per file . PNG, JPG, JPEG"),
-            #             align="start",
-            #         ),
-            #         rx.button("Browse files"),
-            #         justify="between",
-            #     ),
-            #     padding="12px",
-            #     width="100%",
-            #     border="0.5px solid whitesmoke",
-            #     border_radius="12px",
-            #     bg="whitesmoke",
-            # ),
             rx.vstack(
                 rx.text("Ảnh sản phẩm", size="1"),
                 rx.upload(
@@ -341,18 +335,15 @@ def main_content():
                         align="center",
                         width="100%",
                     ),
-                    # SỬA LỖI: Dùng chuỗi trực tiếp thay vì biến
                     id="product_image_upload",
                     padding="12px",
                     width="100%",
                     border="1px solid #ddd",
                     border_radius="12px",
-                    # SỬA LỖI: Dùng chuỗi trực tiếp thay vì biến
                     on_drop=State.handle_upload(
                         rx.upload_files(upload_id="product_image_upload")
                     ),
                 ),
-                # Hiển thị ảnh preview sau khi upload
                 rx.cond(
                     State.uploaded_image_preview != "",
                     rx.image(
@@ -447,10 +438,10 @@ def main_content():
                             ),
                             rx.table.cell(
                                 rx.image(
-                                    src=product["imageurl"],
+                                    src=product["primary_image_url"],
                                     height="3em",
                                     width="auto",
-                                    fallback="/no-image.png",  # Ảnh mặc định nếu không có
+                                    fallback="/no-image.png",
                                 ),
                                 border="0.5px solid #C1C1C1",
                             ),
@@ -458,13 +449,6 @@ def main_content():
                                 product["notes"],
                                 border="0.5px solid #C1C1C1",
                                 color="black",
-                            ),
-                            on_click=lambda: State.handle_selection(
-                                ~(
-                                    State.selected_product.is_not_none()
-                                    & (State.selected_product["id"] == product["id"])
-                                ),
-                                product,
                             ),
                             cursor="pointer",
                             _hover={"background_color": "#f8f9fa"},
@@ -480,6 +464,7 @@ def main_content():
         bg="white",
         color="black",
         padding="14px",
+        overflow_y="auto",  # Thêm thanh cuộn
     )
 
 
@@ -490,6 +475,5 @@ def index() -> rx.Component:
         gap="0",
         width="100%",
         height="100vh",
-        on_mount=State.on_page_load(),
-        # on_mount=State.load_products_type,
+        on_mount=State.on_page_load,  # Sửa lại on_mount
     )

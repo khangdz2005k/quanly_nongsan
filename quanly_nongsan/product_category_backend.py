@@ -12,7 +12,6 @@ CONNECTION_STRING = os.getenv("DATABASE_URL")
 class State(rx.State):
     products: list[dict] = []
     product_types_options: list[str] = []
-    selected_product: int | None = None
 
     # --- Biến cho form "Thêm" ---
     selected_type_code: str = ""
@@ -33,6 +32,10 @@ class State(rx.State):
     edited_image_url: str = ""
 
     search_query: str = ""
+
+    # Biến này sẽ chứa danh sách tất cả các ảnh để đưa vào dropdown
+    all_images_options: list[str] = []
+    edited_primary_image_url: str = ""
 
     # Biến cho dialog xác nhận xóa
     show_delete_confirm_dialog: bool = False
@@ -63,15 +66,21 @@ class State(rx.State):
     def on_page_load(self):
         self.load_products()
         self.load_product_types_code()
+        self.load_all_images()
 
     def load_products(self):
         self.products = []
+        sql = """
+            SELECT p.ID, p.ProductCode, p.Name, p.ProductType, p.ExpiryDate, p.Notes,
+                   p.PrimaryImageID, i.ImageURL AS PrimaryImageURL
+            FROM Products AS p
+            LEFT JOIN Images AS i ON p.PrimaryImageID = i.STT
+            ORDER BY p.ID DESC
+        """
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT ID, ProductCode, Name, ProductType, ExpiryDate, ImageURL, Notes FROM Products ORDER BY ID DESC"
-                )
+                cursor.execute(sql)
                 rows = cursor.fetchall()
                 for row in rows:
                     expiry_date_str = (
@@ -82,12 +91,13 @@ class State(rx.State):
                     self.products.append(
                         {
                             "id": row.ID,
-                            "code": row.ProductCode,
-                            "name": row.Name,
-                            "producttype": row.ProductType,
+                            "code": row.ProductCode or "",
+                            "name": row.Name or "",
+                            "producttype": row.ProductType or "",
                             "expirydate": expiry_date_str,
-                            "imageurl": row.ImageURL,
-                            "notes": row.Notes,
+                            "primary_image_url": row.PrimaryImageURL or "",
+                            "primary_image_id": row.PrimaryImageID,
+                            "notes": row.Notes or "",
                         }
                     )
         except Exception as e:
@@ -105,27 +115,41 @@ class State(rx.State):
         except Exception as e:
             print(f"Lỗi khi tải mã loại hàng {e}")
 
+    def load_all_images(self):
+        self.all_images_options = []
+        try:
+            with pyodbc.connect(CONNECTION_STRING) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT ImageURL FROM Images ORDER BY STT DESC")
+                rows = cursor.fetchall()
+                for row in rows:
+                    self.all_images_options.append(row.ImageURL)
+        except Exception as e:
+            print(f"Lỗi khi tải danh sách ảnh: {e}")
+
     def handle_selection(self, checked: bool, product: dict):
-        """
-        Xử lý khi một checkbox được check hoặc uncheck.
-        Đây là logic mới để sửa lỗi TypeError.
-        """
         if checked:
-            # Nếu checkbox được check, chọn sản phẩm này
             self.selected_product = product
-            # Đồng thời điền thông tin vào form sửa
             self.edited_code = product.get("code", "")
             self.edited_name = product.get("name", "")
             self.edited_type_code = product.get("producttype", "")
             self.edited_expiry_date = product.get("expirydate", "")
             self.edited_notes = product.get("notes", "")
-            self.edited_image_url = product.get("imageurl", "")
+            self.edited_primary_image_url = product.get("primary_image_url")
         else:
-            # Nếu checkbox được uncheck, bỏ chọn sản phẩm
-            self.selected_product = None
+            # Nếu bỏ check, và sản phẩm đang được bỏ check chính là sản phẩm đang được chọn
+            if self.selected_product and self.selected_product["id"] == product["id"]:
+                self.unselect_product()
 
     def unselect_product(self):
         self.selected_product = None
+        # Reset các trường của form sửa khi bỏ chọn
+        self.edited_code = ""
+        self.edited_name = ""
+        self.edited_type_code = ""
+        self.edited_expiry_date = ""
+        self.edited_notes = ""
+        self.edited_primary_image_url = ""
 
     def change_delete_dialog_state(self, show: bool):
         self.show_delete_confirm_dialog = show
@@ -140,22 +164,26 @@ class State(rx.State):
                         (self.selected_product["id"],),
                     )
                     conn.commit()
-                self.selected_product = None
+                self.unselect_product() # Sử dụng hàm đã có để reset
                 self.load_products()
             except Exception as e:
                 print(f"Lỗi khi xóa: {e}")
 
     def search_products(self):
         query = f"%{self.search_query.strip()}%"
-
         self.products = []
+        sql = """
+            SELECT p.ID, p.ProductCode, p.Name, p.ProductType, p.ExpiryDate, p.Notes,
+                   p.PrimaryImageID, i.ImageURL AS PrimaryImageURL
+            FROM Products AS p
+            LEFT JOIN Images AS i ON p.PrimaryImageID = i.STT
+            WHERE p.ProductCode LIKE ? OR p.Name LIKE ?
+            ORDER BY p.ID DESC
+        """
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT ID, ProductCode, Name, ProductType,ExpiryDate, ImageURL, Notes FROM Products WHERE ProductCode LIKE ? OR Name LIKE ? ORDER BY ID DESC",
-                    (query, query),
-                )
+                cursor.execute(sql, (query, query))
                 rows = cursor.fetchall()
                 for row in rows:
                     expiry_date_str = (
@@ -166,12 +194,13 @@ class State(rx.State):
                     self.products.append(
                         {
                             "id": row.ID,
-                            "code": row.ProductCode,
-                            "name": row.Name,
-                            "producttype": row.ProductType,
+                            "code": row.ProductCode or "",
+                            "name": row.Name or "",
+                            "producttype": row.ProductType or "",
                             "expirydate": expiry_date_str,
-                            "imageurl": row.ImageURL,
-                            "notes": row.Notes,
+                            "primary_image_url": row.PrimaryImageURL or "",
+                            "primary_image_id": row.PrimaryImageID,
+                            "notes": row.Notes or "",
                         }
                     )
         except Exception as e:
@@ -180,24 +209,34 @@ class State(rx.State):
     def update_product(self):
         if self.selected_product is None:
             return
-
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
+                image_stt = None
+                if self.edited_primary_image_url:
+                    cursor.execute(
+                        "SELECT STT FROM Images WHERE ImageURL = ?",
+                        self.edited_primary_image_url,
+                    )
+                    image_row = cursor.fetchone()
+                    if image_row:
+                        image_stt = image_row.STT
+
                 cursor.execute(
-                    "UPDATE Products SET Name = ?, ProductCode = ?, ProductType = ?, ImageURL = ?, Notes = ?, ExpiryDate = ? WHERE ID = ?",
+                    """UPDATE Products SET Name = ?, ProductCode = ?, ProductType = ?, Notes = ?, ExpiryDate = ?, PrimaryImageID = ?
+                    WHERE ID = ?""",
                     (
                         self.edited_name,
                         self.edited_code,
                         self.edited_type_code,
-                        self.edited_image_url,
                         self.edited_notes,
                         self.edited_expiry_date or None,
+                        image_stt,
                         self.selected_product["id"],
                     ),
                 )
                 conn.commit()
-            self.selected_product = None
+            self.unselect_product() # Sử dụng hàm đã có để reset
             self.load_products()
         except Exception as e:
             print(f"Lỗi khi cập nhật: {e}")
@@ -210,6 +249,14 @@ class State(rx.State):
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
+                new_image_id = None
+                if self.new_image_url:
+                    cursor.execute(
+                        "INSERT INTO Images (ImageURL) OUTPUT INSERTED.STT VALUES (?)",
+                        (self.new_image_url,),
+                    )
+                    new_image_id = cursor.fetchone()[0]
+
                 cursor.execute(
                     "SELECT ID FROM ProductTypes WHERE Code = ?",
                     self.selected_type_code,
@@ -221,16 +268,16 @@ class State(rx.State):
 
                 cursor.execute(
                     """
-                    INSERT INTO Products (ProductCode, Name, ProductType, ExpiryDate, ImageURL, Notes, ProductTypeID)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
+                INSERT INTO Products (ProductCode, Name, ProductType, ExpiryDate, Notes, ProductTypeID, PrimaryImageID)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
                     self.new_product_code.strip() or None,
                     self.new_product_name.strip(),
                     self.selected_type_code,
                     self.new_expiry_date or None,
-                    self.new_image_url.strip() or None,
                     self.new_notes.strip() or None,
                     product_type_id,
+                    new_image_id,
                 )
                 conn.commit()
 
@@ -241,7 +288,10 @@ class State(rx.State):
                 self.new_notes = ""
                 self.new_image_url = ""
                 self.selected_type_code = ""
+                self.uploaded_image_preview = "" # Thêm dòng này để xóa preview
                 self.load_products()
+                self.load_all_images()
+                rx.window_alert("thêm thành công")
         except Exception as e:
             print(f"Lỗi khi thêm sản phẩm {e}")
             return rx.window_alert(f"Đã xảy ra lỗi: {e}")
@@ -285,6 +335,9 @@ class State(rx.State):
 
     def set_search_query(self, query: str):
         self.search_query = query
+
+    def set_edited_primary_image_url(self, url: str):
+        self.edited_primary_image_url = url
 
     def search_on_enter(self, key: str):
         if key == "Enter":
