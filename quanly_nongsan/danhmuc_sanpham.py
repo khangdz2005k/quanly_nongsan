@@ -258,7 +258,7 @@ def main_content():
                         color="black",
                         padding="12px",
                         cursor="pointer",
-                        on_click=rx.redirect("/product_types")
+                        on_click=rx.redirect("/")
                     ),
                     rx.button(
                         "Danh mục hàng hóa",
@@ -274,7 +274,6 @@ def main_content():
                         color="black",
                         padding="12px",
                         cursor="pointer",
-                        on_click=rx.redirect("/")
                     ),
                     rx.button(
                         "Quản lý hình ảnh",

@@ -111,6 +111,7 @@ def main_content():
                         color="white",
                         padding="12px",
                         cursor="pointer",
+                        on_click=rx.redirect("/"),
                     ),
                     rx.button(
                         "Danh mục hàng hóa",

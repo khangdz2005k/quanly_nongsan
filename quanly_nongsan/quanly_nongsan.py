@@ -5,5 +5,5 @@ from rxconfig import config
 
 
 app = rx.App()
+app.add_page(product_types_page, route="/")
 app.add_page(product_category_page, route="/product_category")
-app.add_page(product_types_page, route="/product_types")
