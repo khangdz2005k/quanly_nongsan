@@ -5,6 +5,7 @@ import bcrypt
 import pyodbc
 import os
 from .phanloai_hanghoa_backend import State as productState
+from .product_category_backend import State as productState2
 
 load_dotenv()
 # Lấy chuỗi kết nối từ biến môi trường đã được tải
@@ -16,6 +17,7 @@ class State(rx.State):
     password: str = ""
     error_message: str = ""
     productState = productState
+    productState2 = productState2
 
     def handle_login(self):
         """Xử lý logic đăng nhập."""

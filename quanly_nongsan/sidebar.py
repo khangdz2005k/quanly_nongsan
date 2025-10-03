@@ -103,7 +103,7 @@ def sidebar():
 def main_content():
     return rx.center(
         rx.vstack(
-                        rx.center(
+            rx.center(
                 rx.hstack(
                     rx.button(
                         "Phân loại hàng hóa",
@@ -118,6 +118,7 @@ def main_content():
                         color="black",
                         padding="12px",
                         cursor="pointer",
+                        on_click=rx.redirect("/product_category"),
                     ),
                     rx.button(
                         "Danh sách khách hàng",
