@@ -1,7 +1,7 @@
 import reflex as rx
-from .login import index as login_page
-from .sidebar import index as manage_product_types
+from .danhmuc_sanpham import index as product_category_page
+from rxconfig import config
+
 
 app = rx.App()
-app.add_page(login_page, route="/")
-app.add_page(manage_product_types, route='/manage_product_types')
+app.add_page(product_category_page, route="/")
