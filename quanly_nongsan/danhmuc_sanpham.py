@@ -1,20 +1,16 @@
 import reflex as rx
+from .product_category_backend import State
 
-data = [
-    {
-        "id": 1,
-        "ma_hh": "SP001",
-        "ten_hh": "Xe đạp",
-        "loai": "Phương tiện",
-        "hinh": "🚲",
-    },
-    {"id": 2, "ma_hh": "SP002", "ten_hh": "Laptop", "loai": "Điện tử", "hinh": "💻"},
-    {"id": 3, "ma_hh": "SP003", "ten_hh": "Bàn học", "loai": "Nội thất", "hinh": "🪑"},
+headers = [
+    "Chọn",
+    "ID",
+    "Mã Hàng Hóa",
+    "Tên Hàng Hóa",
+    "Loại Hàng",
+    "Ngày Hết Hạn",
+    "URL Hình Ảnh",
+    "Ghi Chú",
 ]
-
-headers = ["Select", "ID", "Mã hàng hóa", "Tên hàng hóa", "Loại hàng", "Hình ảnh"]
-
-keys = ["id", "ma_hh", "ten_hh", "loai", "hinh"]
 
 
 def sidebar():
@@ -121,6 +117,137 @@ def sidebar():
     )
 
 
+def edit_product_form():
+    """Khu vực form để sửa và xóa sản phẩm, chỉ hiện khi có sản phẩm được chọn."""
+    edit_headers = [
+        "ID",
+        "Mã Hàng Hóa",
+        "Tên Hàng Hóa",
+        "Loại Hàng",
+        "Ảnh sản phẩm",  # Thêm cột header
+        "Ngày Hết Hạn",
+        "Ghi Chú",
+    ]
+    return rx.cond(
+        State.selected_product,
+        rx.vstack(
+            rx.heading("Dữ liệu đã chọn", size="5", marginTop="20px"),
+            rx.table.root(
+                rx.table.header(
+                    rx.table.row(
+                        *[
+                            rx.table.column_header_cell(
+                                h,
+                                color="black",
+                                border="0.5px solid #C1C1C1",
+                                bg="#E4E6E7",
+                            )
+                            for h in edit_headers
+                        ]
+                    )
+                ),
+                rx.table.body(
+                    rx.table.row(
+                        # ID (không cho sửa)
+                        rx.table.cell(
+                            State.selected_product["id"],
+                            border="0.5px solid #C1C1C1",
+                            color="black",
+                        ),
+                        # Mã Hàng Hóa
+                        rx.table.cell(
+                            rx.input(
+                                value=State.edited_code,
+                                on_change=State.set_edited_code,
+                                bg="white",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Tên Hàng Hóa
+                        rx.table.cell(
+                            rx.input(
+                                value=State.edited_name,
+                                on_change=State.set_edited_name,
+                                bg="white",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Loại Hàng
+                        rx.table.cell(
+                            rx.select(
+                                State.product_types_options,
+                                value=State.edited_type_code,
+                                on_change=State.set_edited_type_code,
+                                bg="whitesmoke",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Ảnh sản phẩm
+                        rx.table.cell(
+                            rx.select(
+                                State.all_images_options,
+                                placeholder="-- Chọn ảnh --",
+                                value=State.edited_primary_image_url,
+                                on_change=State.set_edited_primary_image_url,
+                                background_color="#000",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Ngày Hết Hạn
+                        rx.table.cell(
+                            rx.input(
+                                type_="date",
+                                value=State.edited_expiry_date,
+                                on_change=State.set_edited_expiry_date,
+                                bg="white",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                        # Ghi Chú
+                        rx.table.cell(
+                            rx.input(
+                                value=State.edited_notes,
+                                on_change=State.set_edited_notes,
+                                bg="white",
+                                color="black",
+                            ),
+                            border="0.5px solid #C1C1C1",
+                        ),
+                    )
+                ),
+                width="100%",
+            ),
+            rx.hstack(
+                rx.button(
+                    "Cập nhật thông tin",
+                    on_click=State.update_product,
+                    cursor="pointer",
+                ),
+                rx.button(
+                    "Xóa sản phẩm",
+                    on_click=State.delete_product,
+                    color_scheme="red",
+                    cursor="pointer",
+                ),
+                spacing="4",
+                marginTop="10px",
+            ),
+            width="100%",
+            align="center",
+            padding="15px",
+            border="1px solid #ddd",
+            border_radius="8px",
+            marginTop="20px",
+            bg="#fafafa",
+        ),
+    )
+
+
 def main_content():
     return rx.vstack(
         rx.center(
@@ -170,61 +297,102 @@ def main_content():
                 rx.vstack(
                     rx.text("Chọn loại hàng (*)", size="1"),
                     rx.select(
-                        [
-                            "Điện thoại",
-                            "Máy tính",
-                            "Tivi",
-                            "Tủ lạnh",
-                            " ",
-                        ],  # danh sách lựa chọn
-                        placeholder="-- Chọn loại hàng --",  # hint ban đầu
+                        State.product_types_options,
+                        placeholder="-- Chọn loại hàng --",
                         width="100%",
-                        bg="black",
-                        color="#F0F4F8",
+                        background_color="whitesmoke",
+                        color="black",
+                        value=State.selected_type_code,
+                        on_change=State.set_selected_type_code,
                     ),
                 ),
                 rx.vstack(
                     rx.text("Mã hàng hóa", size="1"),
-                    rx.input("", bg="whitesmoke", color="black"),
+                    rx.input(
+                        "",
+                        bg="whitesmoke",
+                        color="black",
+                        value=State.new_product_code,
+                        on_change=State.set_new_product_code,
+                    ),
                 ),
                 rx.vstack(
                     rx.text("Tên hàng hóa", size="1"),
-                    rx.input("", bg="whitesmoke", color="black", width="100%"),
+                    rx.input(
+                        "",
+                        bg="whitesmoke",
+                        color="black",
+                        width="100%",
+                        value=State.new_product_name,
+                        on_change=State.set_new_product_name,
+                    ),
                     width="20%",
                 ),
                 rx.vstack(
                     rx.text("Ngày hết hạn", size="1"),
-                    rx.input("", bg="whitesmoke", color="black", width="100%"),
+                    rx.input(
+                        "",
+                        type_="date",  # Thêm type="date"
+                        bg="whitesmoke",
+                        color="black",
+                        width="100%",
+                        value=State.new_expiry_date,
+                        on_change=State.set_new_expiry_date,
+                    ),
                     width="20%",
                 ),
                 rx.vstack(
                     rx.text("Ghi chú", size="1"),
-                    rx.input("", bg="whitesmoke", color="black", width="100%"),
+                    rx.input(
+                        "",
+                        bg="whitesmoke",
+                        color="black",
+                        width="100%",
+                        value=State.new_notes,
+                        on_change=State.set_new_notes,
+                    ),
                     width="20%",
                 ),
                 width="100%",
             ),
             rx.vstack(
                 rx.text("Ảnh sản phẩm", size="1"),
-            ),
-            rx.upload(
-                rx.hstack(
-                    rx.icon("upload", size=30),
-                    rx.vstack(
-                        rx.text("Drag and drop file here"),
-                        rx.text("Limit 200MB per file . PNG, JPG, JPEG"),
-                        align="start",
+                rx.upload(
+                    rx.hstack(
+                        rx.icon("upload", size=30),
+                        rx.vstack(
+                            rx.text("Kéo và thả file vào đây"),
+                            rx.text("Chỉ nhận file . PNG, JPG, JPEG"),
+                            align="start",
+                        ),
+                        rx.button("Duyệt file"),
+                        justify="between",
+                        align="center",
+                        width="100%",
                     ),
-                    rx.button("Browse files"),
-                    justify="between",
+                    id="product_image_upload",
+                    padding="12px",
+                    width="100%",
+                    border="1px solid #ddd",
+                    border_radius="12px",
+                    on_drop=State.handle_upload(
+                        rx.upload_files(upload_id="product_image_upload")
+                    ),
                 ),
-                padding="12px",
+                rx.cond(
+                    State.uploaded_image_preview != "",
+                    rx.image(
+                        src=State.uploaded_image_preview,
+                        height="5em",
+                        margin_top="10px",
+                    ),
+                ),
+                align_items="start",
                 width="100%",
-                border="0.5px solid whitesmoke",
-                border_radius="12px",
-                bg="whitesmoke",
             ),
-            rx.button("Thêm loại hàng", bg="red", color="white"),
+            rx.button(
+                "Thêm sản phẩm", bg="red", color="white", on_click=State.add_products
+            ),
             rx.heading("Danh mục hàng hóa", size="7"),
             rx.box(
                 height="2px",
@@ -238,6 +406,9 @@ def main_content():
                     width="100%",
                     bg="#f1f4f9",
                     color="black",
+                    value=State.search_query,
+                    on_change=State.set_search_query,
+                    on_key_down=State.search_on_enter,
                 ),
                 width="100%",
             ),
@@ -257,25 +428,70 @@ def main_content():
                     )
                 ),
                 rx.table.body(
-                    *[
-                        rx.table.row(
+                    rx.foreach(
+                        State.products,
+                        lambda product: rx.table.row(
                             rx.table.cell(
-                                rx.checkbox(),
+                                rx.checkbox(
+                                    checked=(
+                                        State.selected_product.is_not_none()
+                                        & (
+                                            State.selected_product["id"]
+                                            == product["id"]
+                                        )
+                                    ),
+                                    on_change=lambda checked: State.handle_selection(
+                                        checked, product
+                                    ),
+                                ),
                                 border="0.5px solid #C1C1C1",
-                            ),  # Select column
-                            *[
-                                rx.table.cell(
-                                    str(item[k]),
-                                    color="black",
-                                    border="0.5px solid #C1C1C1",
-                                )  # Data columns
-                                for k in keys
-                            ]
-                        )
-                        for item in data
-                    ]
+                            ),
+                            rx.table.cell(
+                                product["id"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            rx.table.cell(
+                                product["code"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            rx.table.cell(
+                                product["name"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            rx.table.cell(
+                                product["producttype"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            rx.table.cell(
+                                product["expirydate"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            rx.table.cell(
+                                rx.image(
+                                    src=product["primary_image_url"],
+                                    height="3em",
+                                    width="auto",
+                                    fallback="/no-image.png",
+                                ),
+                                border="0.5px solid #C1C1C1",
+                            ),
+                            rx.table.cell(
+                                product["notes"],
+                                border="0.5px solid #C1C1C1",
+                                color="black",
+                            ),
+                            cursor="pointer",
+                            _hover={"background_color": "#f8f9fa"},
+                        ),
+                    )
                 ),
             ),
+            edit_product_form(),
             width="100%",
         ),
         width="100%",
@@ -283,7 +499,7 @@ def main_content():
         bg="white",
         color="black",
         padding="14px",
-        overflow_y="auto",
+        overflow_y="auto",  # Thêm thanh cuộn
     )
 
 
@@ -294,5 +510,5 @@ def index() -> rx.Component:
         gap="0",
         width="100%",
         height="100vh",
-        # on_mount=State.load_products_type,
+        on_mount=State.on_page_load,  # Sửa lại on_mount
     )
