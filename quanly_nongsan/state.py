@@ -6,6 +6,7 @@ import pyodbc
 import os
 from .phanloai_hanghoa_backend import State as productState
 from .product_category_backend import State as productState2
+from .customer_backend import UserState as UserState
 
 load_dotenv()
 # Lấy chuỗi kết nối từ biến môi trường đã được tải
@@ -18,6 +19,7 @@ class State(rx.State):
     error_message: str = ""
     productState = productState
     productState2 = productState2
+    UserState = UserState
 
     def handle_login(self):
         """Xử lý logic đăng nhập."""

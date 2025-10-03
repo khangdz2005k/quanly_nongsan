@@ -127,6 +127,7 @@ def main_content():
                         color="black",
                         padding="12px",
                         cursor="pointer",
+                        on_click=rx.redirect("/customer"),
                     ),
                     rx.button(
                         "Quản lý hình ảnh",
