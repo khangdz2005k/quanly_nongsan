@@ -7,10 +7,15 @@ def sidebar():
     return rx.vstack(
         # Logo
         rx.hstack(
-            rx.image(src="/logo.png", width="140px", height="180px"),
-            marginTop="20%",
+            rx.spacer(), rx.icon("x", cursor="pointer"), width="100%", align="center"
+        ),
+        rx.image(
+            src="/logo.png",
+            max_width="40%",
+            height="20%",
             border="2px solid none",
             boxShadow="0 0 10px rgba(255, 0, 0, 0.75)",
+            marginTop="10%",
         ),
         rx.box(
             height="1px", bg="black", width="100%", marginTop="5%", marginBottom="5%"
@@ -90,6 +95,9 @@ def sidebar():
             rx.heading("Xin chào: KD Educode (kdevn)", size="5", text_align="left"),
             rx.button("Đăng xuất", bg="lightgray", color="black", border="1px solid"),
             marginTop="5%",
+            bg="#f0f4f8",
+            width="100%",
+            padding="10px 0",
         ),
         width="25%",
         height="100vh",
@@ -103,6 +111,41 @@ def sidebar():
 def main_content():
     return rx.center(
         rx.vstack(
+            rx.center(
+                rx.hstack(
+                    rx.button(
+                        "Phân loại hàng hóa",
+                        bg="red",
+                        color="white",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Danh mục hàng hóa",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Danh sách khách hàng",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Quản lý hình ảnh",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    spacing="0",
+                ),
+                width="100%",
+                marginBottom="2%",
+            ),
             rx.heading("Thêm loại hàng", size="7"),
             rx.box(
                 style={
@@ -332,10 +375,16 @@ def main_content():
             width="100%",
             max_width="1400px",
         ),
+        style={
+            "&::-webkit-scrollbar": {"display": "none"},
+            "scrollbarWidth": "none", 
+        },
+        padding = "20px",
         width="100%",
         height="100vh",
         bg="white",
         color="black",
+        overflow_y="auto",
     )
 
 
