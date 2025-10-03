@@ -103,6 +103,41 @@ def sidebar():
 def main_content():
     return rx.center(
         rx.vstack(
+                        rx.center(
+                rx.hstack(
+                    rx.button(
+                        "Phân loại hàng hóa",
+                        bg="red",
+                        color="white",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Danh mục hàng hóa",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Danh sách khách hàng",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    rx.button(
+                        "Quản lý hình ảnh",
+                        bg="whitesmoke",
+                        color="black",
+                        padding="12px",
+                        cursor="pointer",
+                    ),
+                    spacing="0",
+                ),
+                width="100%",
+                marginBottom="2%",
+            ),
             rx.heading("Thêm loại hàng", size="7"),
             rx.box(
                 style={
