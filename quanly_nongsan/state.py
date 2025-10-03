@@ -7,6 +7,7 @@ import os
 from .phanloai_hanghoa_backend import State as productState
 from .product_category_backend import State as productState2
 from .customer_backend import UserState as UserState
+from .images_backend import ImageState as ImageState
 
 load_dotenv()
 # Lấy chuỗi kết nối từ biến môi trường đã được tải
@@ -20,6 +21,7 @@ class State(rx.State):
     productState = productState
     productState2 = productState2
     UserState = UserState
+    ImageState = ImageState
 
     def handle_login(self):
         """Xử lý logic đăng nhập."""

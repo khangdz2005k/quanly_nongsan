@@ -135,6 +135,7 @@ def main_content():
                         color="black",
                         padding="12px",
                         cursor="pointer",
+                        on_click=rx.redirect("/image_page"),
                     ),
                     spacing="0",
                 ),

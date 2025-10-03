@@ -251,44 +251,44 @@ def edit_product_form():
 def main_content():
     return rx.vstack(
         rx.center(
-                rx.hstack(
-                    rx.button(
-                        "Phân loại hàng hóa",
-                        bg="whitesmoke",
-                        color="black",
-                        padding="12px",
-                        cursor="pointer",
-                        on_click=rx.redirect("/")
-                    ),
-                    rx.button(
-                        "Danh mục hàng hóa",
-                        bg="red",
-                        color="white",
-                        padding="12px",
-                        cursor="pointer",
-                        on_click=rx.redirect("/product_category"),
-                    ),
-                    rx.button(
-                        "Danh sách khách hàng",
-                        bg="whitesmoke",
-                        color="black",
-                        padding="12px",
-                        cursor="pointer",
-                        on_click=rx.redirect("/customer"),
-                    ),
-                    rx.button(
-                        "Quản lý hình ảnh",
-                        bg="whitesmoke",
-                        color="black",
-                        padding="12px",
-                        cursor="pointer",
-                    ),
-                    spacing="0",
+            rx.hstack(
+                rx.button(
+                    "Phân loại hàng hóa",
+                    bg="whitesmoke",
+                    color="black",
+                    padding="12px",
+                    cursor="pointer",
+                    on_click=rx.redirect("/"),
                 ),
-                width="100%",
-                marginBottom="2%",
+                rx.button(
+                    "Danh mục hàng hóa",
+                    bg="red",
+                    color="white",
+                    padding="12px",
+                    cursor="pointer",
+                    on_click=rx.redirect("/product_category"),
+                ),
+                rx.button(
+                    "Danh sách khách hàng",
+                    bg="whitesmoke",
+                    color="black",
+                    padding="12px",
+                    cursor="pointer",
+                    on_click=rx.redirect("/customer"),
+                ),
+                rx.button(
+                    "Quản lý hình ảnh",
+                    bg="whitesmoke",
+                    color="black",
+                    padding="12px",
+                    cursor="pointer",
+                    on_click=rx.redirect("/image_page"),
+                ),
+                spacing="0",
             ),
-        
+            width="100%",
+            marginBottom="2%",
+        ),
         rx.heading("Thêm hàng hóa", size="7"),
         rx.box(
             height="2px",
@@ -395,7 +395,10 @@ def main_content():
                 width="100%",
             ),
             rx.button(
-                "Thêm sản phẩm", bg="red", color="white", on_click=State.productState2.add_products
+                "Thêm sản phẩm",
+                bg="red",
+                color="white",
+                on_click=State.productState2.add_products,
             ),
             rx.heading("Danh mục hàng hóa", size="7"),
             rx.box(
