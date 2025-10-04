@@ -3,10 +3,35 @@ from .login_backend import State
 from .sidebar_ui import sidebar
 
 def main_content() -> rx.Component:
-    ...
+    return rx.center(
+        rx.vstack(
+            rx.center(
+                rx.button("Password", bg = "red", color = "white", cursor = "pointer"),
+                width = "100%",
+            ),
+            rx.vstack(
+                rx.heading("Password", ),
+                rx.text("Mật khẩu cũ", size = "1"),
+                rx.input("", width = "100%", bg = "#F0F4F8"),
+                rx.text("Mật khẩu mới", size = "1"),
+                rx.input("", width = "100%", bg = "#F0F4F8"),
+                rx.text("Xác nhận mật khẩu mới", size = "1"),
+                rx.input("", width = "100%", bg = "#F0F4F8"),
+                rx.button("Đổi mật khẩu", bg = "red", color = "white", cursor = "pointer"),
+                width = "100%"
+            ),
+             width = "100%",
+             padding = "18px",
+        ),
+        width = "100%",
+        bg = "white",
+        color = "black",
+        height = "100vh",
+    )
 
 def index() -> rx.Component:
     return rx.hstack(
         sidebar(),
-        main_content()
+        main_content(),
+        gap = "0"
     )
