@@ -1,107 +1,10 @@
 import reflex as rx
-from .state import State
-
-
-def sidebar():
-    # ... (nội dung hàm sidebar giữ nguyên, không cần thay đổi)
-    return rx.vstack(
-        # Logo
-        rx.hstack(
-            rx.image(src="/logo.png", width="140px", height="180px"),
-            marginTop="20%",
-            border="2px solid none",
-            boxShadow="0 0 10px rgba(255, 0, 0, 0.75)",
-        ),
-        rx.box(
-            height="1px", bg="black", width="100%", marginTop="5%", marginBottom="5%"
-        ),
-        rx.vstack(
-            rx.heading(
-                rx.hstack(
-                    rx.icon("house"),
-                    rx.text("Tồn kho và bán hàng"),
-                    spacing="2",
-                    align="center",
-                ),
-            ),
-            rx.box(height="1px", bg="black", width="100%", marginTop="2px"),
-            rx.box(
-                rx.hstack(
-                    rx.icon("user-round-check", color="orange"),
-                    rx.text("Khai báo", color="white", font_weight="bold"),
-                    width="100%",
-                    bg="red",
-                    padding="4px",
-                    border_radius="4px",
-                ),
-                width="100%",
-            ),
-            rx.box(
-                rx.hstack(
-                    rx.icon("package", color="orange"),
-                    rx.text("Quản lí kho"),
-                    width="100%",
-                    bg="none",
-                    padding="4px",
-                    border_radius="4px",
-                ),
-            ),
-            rx.box(
-                rx.hstack(
-                    rx.icon("dollar-sign", color="orange"),
-                    rx.text("Bán hàng"),
-                    width="100%",
-                    bg="none",
-                    padding="4px",
-                    border_radius="4px",
-                )
-            ),
-            rx.box(
-                rx.hstack(
-                    rx.icon("bar-chart", color="orange"),
-                    rx.text("Báo Cáo"),
-                    width="100%",
-                    bg="none",
-                    padding="4px",
-                    border_radius="4px",
-                )
-            ),
-            rx.box(
-                rx.hstack(
-                    rx.icon("users", color="orange"),
-                    rx.text("Tài khoản"),
-                    width="100%",
-                    bg="none",
-                    padding="4px",
-                    border_radius="4px",
-                )
-            ),
-            width="95%",
-            spacing="2",
-            border="3px solid #cac8c6",
-            bg="#cac8c6",
-            border_radius="4px",
-            padding="8px",
-            text_align="left",
-        ),
-        # rx.spacer(),
-        # User info
-        rx.vstack(
-            rx.heading("Xin chào: KD Educode (kdevn)", size="5", text_align="left"),
-            rx.button("Đăng xuất", bg="lightgray", color="black", border="1px solid"),
-            marginTop="5%",
-        ),
-        width="25%",
-        height="100vh",
-        padding="10px",
-        bg="#f0f4f8",
-        color="black",
-        align="center",
-    )
+from ..states.state import State
+from .sidebar_ui import sidebar
 
 
 def main_content():
-    return rx.center(
+    return rx.vstack(
         rx.vstack(
             rx.center(
                 rx.hstack(
@@ -111,7 +14,7 @@ def main_content():
                         color="white",
                         padding="12px",
                         cursor="pointer",
-                        on_click=rx.redirect("/"),
+                        on_click=rx.redirect("/product_types"),
                     ),
                     rx.button(
                         "Danh mục hàng hóa",
@@ -375,6 +278,7 @@ def main_content():
         height="100vh",
         bg="white",
         color="black",
+        padding = "20px"
     )
 
 
