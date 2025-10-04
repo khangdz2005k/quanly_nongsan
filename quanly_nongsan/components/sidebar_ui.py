@@ -1,5 +1,5 @@
 import reflex as rx
-from ..states.state import State
+from ..states.state import State 
 
 
 def sidebar() -> rx.Component:
@@ -28,7 +28,8 @@ def sidebar() -> rx.Component:
                 size="4",  # Chỉnh size cho phù hợp
             ),
             rx.box(height="1px", bg="black", width="100%", marginTop="2px"),
-            rx.box(
+            rx.link(
+                rx.box(
                 rx.hstack(
                     rx.icon("user-round-check", color="orange"),
                     rx.text("Khai báo", color="white", font_weight="bold"),
@@ -38,6 +39,10 @@ def sidebar() -> rx.Component:
                     border_radius="4px",
                 ),
                 width="100%",
+            ),
+                href="/product_types",
+                color = "black",
+                width = "100%",
             ),
             rx.box(
                 rx.hstack(
@@ -69,7 +74,8 @@ def sidebar() -> rx.Component:
                     border_radius="4px",
                 )
             ),
-            rx.box(
+            rx.link(
+                rx.box(
                 rx.hstack(
                     rx.icon("users", color="orange"),
                     rx.text("Tài khoản"),
@@ -77,7 +83,11 @@ def sidebar() -> rx.Component:
                     bg="none",
                     padding="4px",
                     border_radius="4px",
-                )
+                ),
+            ),
+                href="/change_password",
+                color = "black",
+                width = "100%",
             ),
             width="95%",
             spacing="2",

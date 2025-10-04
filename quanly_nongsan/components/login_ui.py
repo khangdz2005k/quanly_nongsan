@@ -17,7 +17,7 @@ def index() -> rx.Component:
                     on_change=State.LoginState.set_username,
                     color="black",
                     style={"input::placeholder": {"color": "#ccc"}},
-                    on_key_down=State.LoginState.login_on_enter
+                    on_key_down=State.LoginState.login_on_enter,
                 ),
                 rx.text("Password", size="1"),
                 rx.input(
@@ -29,7 +29,7 @@ def index() -> rx.Component:
                     on_change=State.LoginState.set_password,
                     style={"input::placeholder": {"color": "#ccc"}},
                     color="black",
-                    on_key_down=State.LoginState.login_on_enter
+                    on_key_down=State.LoginState.login_on_enter,
                 ),
                 rx.button(
                     "Login",
