@@ -85,9 +85,8 @@ class State(rx.State):
 
     def change_password(self):
         current_username = self.current_user["username"]
-        self.change_password_message = ""
-        if self.old_password != self.new_password:
-            self.change_password_message = "Xác nhận mật khẩu không đúng"
+        if self.new_password != self.confirm_new_password:
+            return
         try:
             with pyodbc.connect(CONNECTION_STRING) as conn:
                 cursor = conn.cursor()
@@ -103,12 +102,11 @@ class State(rx.State):
                     self.confirm_new_password = ""
                     return rx.redirect("/login_page")
                 else: 
-                    self.change_password_message = "Mật khẩu cũ không đúng."
+                    return
 
         except Exception as e:
             print(f"Lỗi khi đổi mật khẩu")
 
 
 
-         
          
