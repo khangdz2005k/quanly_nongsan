@@ -12,6 +12,10 @@ CONNECTION_STRING = os.getenv("DATABASE_URL")
 class State(rx.State):
     username: str = ""
     password: str = ""
+    old_password: str = ""
+    new_password: str = ""
+    confirm_new_password: str = ""
+    
     error_message: str = ""
     current_user: dict = {}
 
@@ -66,3 +70,44 @@ class State(rx.State):
     def set_password(self, value: str):
         self.password = value
         self.error_message = ""
+
+    def set_old_password(self, value: str):
+        self.old_password = value
+        self.change_password_message = ""
+    
+    def set_new_password(self, value: str):
+        self.new_password = value
+        self.change_password_message = ""       
+
+    def set_confirm_new_password(self, value: str):
+        self.confirm_new_password = value
+        self.change_password_message = ""
+
+    def change_password(self):
+        current_username = self.current_user["username"]
+        self.change_password_message = ""
+        if self.old_password != self.new_password:
+            self.change_password_message = "Xác nhận mật khẩu không đúng"
+        try:
+            with pyodbc.connect(CONNECTION_STRING) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT PasswordHash FROM Users WHERE Username = ?", current_username)
+                user_row = cursor.fetchone()
+                if user_row and bcrypt.checkpw(self.password.encode(), user_row.PasswordHash.encode()):
+                    new_password_hash = self.password.encode(), user_row.gensalt.encode()
+                    cursor.execute("UPDATE PasswordHash = ? WHERE Username = ?", new_password_hash, current_username)
+                    conn.commit()
+                    self.change_password_message = "Đổi mật khẩu thành công!"
+                    self.old_password = ""
+                    self.new_password = ""
+                    self.confirm_new_password = ""
+                    return rx.redirect("/login_page")
+                else: 
+                    self.change_password_message = "Mật khẩu cũ không đúng."
+
+        except Exception as e:
+            print(f"Lỗi khi đổi mật khẩu")
+
+
+
+         
