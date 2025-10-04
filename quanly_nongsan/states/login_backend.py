@@ -23,14 +23,19 @@ class State(rx.State):
                 cursor = conn.cursor()
                 # Tìm user dựa trên username
                 cursor.execute(
-                    "SELECT Username, PasswordHash, Role FROM Users WHERE Username = ?", self.username
+                    "SELECT Username, PasswordHash, Role, FullName FROM Users WHERE Username = ?",
+                    self.username,
                 )
                 user_row = cursor.fetchone()
                 if user_row and bcrypt.checkpw(
                     self.password.encode(), user_row.PasswordHash.encode()
                 ):
-                    self.current_user = {"username": user_row.Username, "role": user_row.Role}
-                    if(self.current_user["role"] == "user"):
+                    self.current_user = {
+                        "username": user_row.Username,
+                        "role": user_row.Role,
+                        "fullname": user_row.FullName,
+                    }
+                    if self.current_user["role"] == "user":
                         return rx.redirect("/customer")
                     else:
                         return rx.redirect("/product_types")
@@ -43,13 +48,13 @@ class State(rx.State):
         except Exception as e:
             self.error_message = "Lỗi kết nối database."
             print(f"Lỗi đăng nhập: {e}")
-            
+
     def handle_logout(self):
         self.current_user = {}
         self.username = ""
         self.password = ""
         return rx.redirect("/login_page")
-    
+
     def login_on_enter(self, key: str):
         if key == "Enter":
             return self.handle_login()

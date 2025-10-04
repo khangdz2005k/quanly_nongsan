@@ -89,7 +89,7 @@ def sidebar() -> rx.Component:
         ),
         rx.spacer(),  # Đẩy nội dung xuống dưới cùng
         rx.vstack(
-            rx.heading("Xin chào: KD Educode (kdevn)", size="5", text_align="left"),
+            rx.heading("Xin chào: ", State.LoginState.current_user["fullname"], size="5", text_align="left"),
             rx.button(
                 "Đăng xuất",
                 bg="lightgray",
