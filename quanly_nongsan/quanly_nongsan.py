@@ -1,14 +1,6 @@
 import reflex as rx
-
-
-class State(rx.State):
-    """The app state."""
-
-
-def index() -> rx.Component:
-    # Welcome Page (Index)
-    return rx.container()
+from .change_password_ui import index as change_password_page
 
 
 app = rx.App()
-app.add_page(index)
+app.add_page(change_password_page, route = "/")
